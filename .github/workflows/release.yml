@@ -1,0 +1,34 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release pushed tag
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y debootstrap fdisk dosfstools kpartx
+
+      - name: Build
+        run: sudo ./build-linux-image.sh --disk-image images/baby-deb.img
+
+      - name: Compress
+        run: 7z a baby-deb.img.7z ./images/*
+
+      - name: Release with Notes
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            baby-deb.img.7z
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
